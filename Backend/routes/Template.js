@@ -172,6 +172,24 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+//searchbar route
+router.get('/', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = {};
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter = {
+        $or: [{ templatename: regex }, { description: regex }],
+      };
+    }
+    const templates = await Template.find(filter);
+    res.json(templates);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch templates' });
+  }
+});
+
 // DELETE multiple templates (by ids array in req.body.ids)
 router.delete('/', async (req, res) => {
   try {

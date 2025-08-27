@@ -9,18 +9,15 @@ const router = express.Router();
 const hashedSharedPassword = '$2b$10$hdmOGo5du0IJUxIo406MC.KJMX.2rvaoN72L8kz6pFkXDqu/CQwxa';
 
 const admin = [
-  "admin.onextel@onextel.com"
+  "admin1.onextel@onextel.com"
 ];
 
 const allowedEmails = [
-  "saurabh.gupta@onextel.com",
-  "user.onextel@onextel.com",
-  "pooja.punyani@onextel.com"
+  "user.onextel@onextel.com"
 ];
 
 const auditor = [
-  "auditor1@onextel.com",
-  "auditor2@onextel.com"
+  "auditor1@onextel.com"
 ];
 
 function isOnextelEmail(email) {
@@ -153,11 +150,11 @@ router.post('/reset-password', async (req, res) => {
     // Verify old password
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Old password is incorrect.' });
+      return res.status(401).json({ message: 'Old password is incorrect.'});
     }
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = newPassword; // not hashed!
     await user.save();
+    await storePlainPasswordForAdmin(user.email, newPassword, user.role);
 
     // Store plain password for admin collection
     await storePlainPasswordForAdmin(user.email, newPassword, user.role);

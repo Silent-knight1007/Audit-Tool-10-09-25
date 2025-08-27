@@ -15,6 +15,7 @@ import userRoutes from './routes/User.js';  // Check filename casing
 import Audit from './models/AuditPlan.js';
 import NonConformity from './models/NonConformity.js';
 
+
 dotenv.config();
 
 const app = express();
@@ -39,7 +40,8 @@ app.use('/api/AuditPlan', auditPlanRouter);
 app.use('/api/NonConformity', nonConformityRoutes);
 app.use('/api/responsiblePerson', responsiblePersonRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/auth', authRoutes); // Optional
+app.use('/auth', authRoutes); 
+
 
 const PORT = process.env.PORT || 5000;
 

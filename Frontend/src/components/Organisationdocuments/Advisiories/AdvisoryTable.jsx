@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { debounce } from 'lodash';
 
 const AdvisoryTable = () => {
   const [advisories, setAdvisories] = useState([]);
@@ -8,6 +9,8 @@ const AdvisoryTable = () => {
   const navigate = useNavigate();
   const [modalUrl, setModalUrl] = useState(null);
   const userRole = 'user';
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   // Open attachment preview
   const openViewer = (advisory) => {
@@ -32,14 +35,37 @@ const AdvisoryTable = () => {
     fetchAdvisories();
   }, []);
 
-  const fetchAdvisories = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/advisories');
-      setAdvisories(response.data);
-    } catch (error) {
-      console.error('Error fetching advisories:', error);
-    }
+  useEffect(() => {
+  const delayedFetch = debounce(() => {
+    fetchAdvisories(searchQuery);
+  }, 300); // 300ms debounce
+
+  delayedFetch();
+
+  // Cleanup debounce on unmount or when searchQuery changes
+  return delayedFetch.cancel;
+}, [searchQuery]);
+
+  const fetchAdvisories = async (query = "") => {
+  try {
+    const url = query 
+      ? `http://localhost:5000/api/advisories?q=${encodeURIComponent(query)}` 
+      : 'http://localhost:5000/api/advisories';
+
+    const response = await axios.get(url);
+    setAdvisories(response.data);
+  } catch (error) {
+    console.error('Error fetching advisories:', error);
+  }
   };
+  // const fetchAdvisories = async () => {
+  //   try {
+  //     const response = await axios.get('http://localhost:5000/api/advisories');
+  //     setAdvisories(response.data);
+  //   } catch (error) {
+  //     console.error('Error fetching advisories:', error);
+  //   }
+  // };
 
   const handleCreateNew = () => {
     navigate('/organisationdocuments/advisories/new');
@@ -105,6 +131,7 @@ const AdvisoryTable = () => {
         >
           Add
         </button>
+
         <button
           onClick={handleEditSelected}
           disabled={selectedIds.length !== 1}
@@ -114,6 +141,7 @@ const AdvisoryTable = () => {
         >
           Edit
         </button>
+        
         <button
           onClick={handleDeleteSelected}
           title={userRole !== 'admin' ? 'You do not have permission to delete advisories' : ''}
@@ -123,6 +151,22 @@ const AdvisoryTable = () => {
           } transition`}>
           Delete
         </button>
+       
+        <input
+          type="text"
+          placeholder="Search advisories..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border p-2 rounded text-xs mr-2"
+          style={{ width: '220px', height: '30px' }} // style as needed
+        />
+
+        <button
+          onClick={() => fetchAdvisories(searchQuery)}
+          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 rounded-lg">
+          Search
+        </button>
+
       </div>
 
       <table className="min-w-full border border-red-600 rounded text-sm">

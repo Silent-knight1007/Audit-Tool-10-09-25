@@ -23,9 +23,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/* =====================================================
-   ATTACHMENTS
-===================================================== */
+/* ========== ATTACHMENTS ========== */
 
 // Upload attachments
 router.post('/:id/attachments', upload.array('attachments'), async (req, res) => {
@@ -119,9 +117,7 @@ router.delete('/:guidelineId/attachments/:fileId', async (req, res) => {
   }
 });
 
-/* =====================================================
-   GUIDELINES CRUD
-===================================================== */
+/* ========== GUIDELINES CRUD ========== */
 
 // GET all guidelines
 router.get('/', async (req, res) => {
@@ -176,6 +172,24 @@ router.put('/:id', async (req, res) => {
   } catch (err) {
     console.error('Guideline update error:', err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// searchbar route 
+router.get('/', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = {};
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter = {
+        $or: [{ guidelinetitle: regex }, { description: regex }],
+      };
+    }
+    const guidelines = await Guideline.find(filter);
+    res.json(guidelines);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guidelines' });
   }
 });
 

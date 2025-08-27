@@ -25,9 +25,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* =========================================================
-   ATTACHMENTS
-========================================================= */
+/* ========== ATTACHMENTS ========== */
+
 // Upload attachments for certificate
 router.post('/:id/attachments', upload.array('attachments'), async (req, res) => {
   try {
@@ -139,10 +138,8 @@ router.delete('/:certificateId/attachments/:attachmentId', async (req, res) => {
   }
 });
 
-
-/* =========================================================
-   CERTIFICATES CRUD
-========================================================= */
+/*==========CERTIFICATES CRUD========== */
+   
 // GET all certificates
 router.get('/', async (req, res) => {
   try {
@@ -241,7 +238,23 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-
+// searchbar route 
+router.get('/', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = {};
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter = {
+        $or: [{ certificatename: regex }, { description: regex }],
+      };
+    }
+    const certificates = await Certificate.find(filter);
+    res.json(certificates);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch certificates' });
+  }
+});
 
 // DELETE multiple certificates
 router.delete('/', async (req, res) => {

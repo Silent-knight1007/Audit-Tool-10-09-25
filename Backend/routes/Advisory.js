@@ -151,6 +151,7 @@ router.delete('/:advisoryId/attachments/:fileId', async (req, res) => {
   }
 });
 
+
 // ======= Advisory CRUD Routes =======
 
 // Get all advisories
@@ -171,6 +172,24 @@ router.get('/:id', async (req, res) => {
     res.json(advisory);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch advisory' });
+  }
+});
+
+//searchbar route
+router.get('/', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = {};
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter = {
+        $or: [{ advisorytitle: regex }, { description: regex }],
+      };
+    }
+    const advisories = await Advisory.find(filter);
+    res.json(advisories);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch advisories' });
   }
 });
 
@@ -205,9 +224,6 @@ router.put('/:id', async (req, res) => {
       }
       advisory.Date = parsedDate;
     }
-
-    // If you want to allow editing attachments *within this PUT*, you could also handle them here,
-    // but normally attachments have their own upload routes.
 
     const updated = await advisory.save();
     res.json(updated);

@@ -152,6 +152,24 @@ router.post('/', async (req, res) => {
   }
 });
 
+// searchbar route 
+router.get('/', async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = {};
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      filter = {
+        $or: [{ policytitle: regex }, { description: regex }],
+      };
+    }
+    const policies = await Policy.find(filter);
+    res.json(policies);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch policies' });
+  }
+});
+
 // PUT update a policy by ID
 router.put('/:id', async (req, res) => {
   try {
@@ -170,8 +188,6 @@ router.put('/:id', async (req, res) => {
     res.status(400).json({ error: 'Failed to update policy', detail: err.message });
   }
 });
-
-
 
 // DELETE multiple policies (by ids array in req.body.ids)
 router.delete('/', async (req, res) => {
