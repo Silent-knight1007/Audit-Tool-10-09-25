@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { debounce } from 'lodash';
+import AuthContext from "../../../Context/AuthContext";
 
 const AdvisoryTable = () => {
   const [advisories, setAdvisories] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const navigate = useNavigate();
   const [modalUrl, setModalUrl] = useState(null);
-  const userRole = 'user';
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useContext(AuthContext);
+  const userRole = user?.role || 'user';
 
 
   // Open attachment preview
@@ -145,9 +147,9 @@ const AdvisoryTable = () => {
         <button
           onClick={handleDeleteSelected}
           title={userRole !== 'admin' ? 'You do not have permission to delete advisories' : ''}
-          disabled={selectedIds.length === 0 || userRole === 'user'}
+          disabled={selectedIds.length === 0 || userRole !== 'admin'}
           className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
-          selectedIds.length === 0 || userRole === 'user' ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
+          selectedIds.length === 0 || userRole !== 'admin' ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
           } transition`}>
           Delete
         </button>

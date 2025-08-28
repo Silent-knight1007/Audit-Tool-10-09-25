@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../../../Context/AuthContext';
 
 const GuidelineTable = () => {
   const [guidelines, setGuidelines] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const [modalUrl, setModalUrl] = useState(null);
-  const userRole = 'user';
+  const { user } = useContext(AuthContext);
+  const userRole = user?.role || 'user';
 
 const openViewer = (guideline) => {
   if (guideline.attachments && guideline.attachments.length > 0) {
@@ -44,6 +47,12 @@ const closeViewer = () => setModalUrl(null);
     } catch (error) {
       console.error('Error fetching guidelines:', error);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    fetchGuidelines(val);
   };
 
   const handleCreateNew = () => {
@@ -85,7 +94,7 @@ const closeViewer = () => setModalUrl(null);
       setSelectedIds([]);
       alert(response.data.message || 'Deleted successfully.');
     } catch (error) {
-      console.error('Error deleting guidelines:', error);
+      console.error('Error deleting guidelines:', error.response?.data || error.message);
       alert('Failed to delete selected guidelines');
     }
   };
@@ -108,6 +117,7 @@ const closeViewer = () => setModalUrl(null);
     <div className="p-2 max-w-full">
         <h2 className="text-xl font-bold mr-10">Guidelines</h2>
       <div className="flex gap-x-2 justify-left items-center mb-2">
+
         <button
           onClick={handleCreateNew}
           className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300">
@@ -132,10 +142,27 @@ const closeViewer = () => setModalUrl(null);
           } transition`}>
           Delete
         </button>
+        
+        <input
+          type="text"
+          placeholder="Search certificates..."
+          className="border p-2 rounded text-xs ml-4"
+          style={{ width: '220px', height: '30px' }}
+          value={searchQuery}
+          onChange={handleSearchChange}/>
+
+         <button
+          onClick={() => fetchGuidelines(searchQuery)}
+          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 rounded-lg">
+          Search
+        </button>
+
       </div>
 
       <table className="min-w-full border border-red-600 rounded text-sm">
+
         <thead className="bg-red-600">
+
           <tr>
             <th className="border p-2">
               <input
@@ -151,7 +178,9 @@ const closeViewer = () => setModalUrl(null);
             <th className="border p-2 text-xs text-white">Release Date</th>
             <th className="border p-2 text-xs text-white">Applicable Standard</th>
           </tr>
+
         </thead>
+
         <tbody>
           {guidelines.length === 0 ? (
             <tr>
@@ -190,7 +219,9 @@ const closeViewer = () => setModalUrl(null);
             ))
           )}
         </tbody>
+
       </table>
+
       {modalUrl && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
     <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] relative p-4">

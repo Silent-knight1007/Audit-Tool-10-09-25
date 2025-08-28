@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../../../Context/AuthContext';
 
 const TemplateTable = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalUrl, setModalUrl] = useState(null);
-  const userRole = 'user';
-//   const openViewer = (template) => {
-//   if (template.attachments && template.attachments.length > 0) {
-//     setModalUrl(`http://localhost:5000/api/templates/${template._id}/attachments/${template.attachments[0]._id}`);
-//   }
-// };
+  const { user } = useContext(AuthContext);
+  const userRole = user?.role || 'user';
+  const [noResults, setNoResults] = useState(false);
+
+
 
 const openViewer = (template) => {
   if (template.attachments && template.attachments.length > 0) {
@@ -27,28 +28,38 @@ const openViewer = (template) => {
     if (inlineViewable.includes(ext)) {
       setModalUrl(url); // Open modal popup with iframe
     } else {
-      // Redirect/open new page/tab for other formats
       window.location.href = url;  // Redirects in the same tab
-      // OR to open in a new tab/window:
-      // window.open(url, '_blank', 'noopener,noreferrer');
     }
   }
 };
 const closeViewer = () => setModalUrl(null);
 
-
   useEffect(() => {
-    fetchTemplates();
+    fetchTemplates(searchQuery);
+    console.log('Fetching templates with query:', searchQuery);
   }, []);
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/templates');
-      setTemplates(response.data);
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-    }
-  };
+  const fetchTemplates = async (searchQuery = '') => {
+  console.log('Fetching templates for query:', searchQuery);
+  try {
+    const url = searchQuery 
+      ? `http://localhost:5000/api/templates?q=${encodeURIComponent(searchQuery)}`
+      : 'http://localhost:5000/api/templates';
+
+    const response = await axios.get(url);
+    console.log('Response data:', response.data);
+    setTemplates(response.data);
+    setNoResults(response.data.length === 0);
+  } catch(error) {
+    console.error('Error fetching templates:', error);
+  }
+};
+
+const handleSearchChange = (e) => {
+  const val = e.target.value;
+  console.log('Search input changed:', val);
+  setSearchQuery(e.target.value);
+};
 
   const handleCreateNew = () => {
     navigate('/organisationdocuments/templates/new');
@@ -112,11 +123,13 @@ const closeViewer = () => setModalUrl(null);
     <div className="p-2 max-w-full">
         <h2 className="text-xl font-bold mr-10">Templates</h2>
       <div className="flex gap-x-2 justify-left items-center mb-2">
+
         <button
           onClick={handleCreateNew}
           className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300">
           Add
         </button>
+
         <button
           onClick={handleEditSelected}
           disabled={selectedIds.length !== 1}
@@ -125,6 +138,7 @@ const closeViewer = () => setModalUrl(null);
           } transition`}>
             Edit 
         </button>
+
         <button
           onClick={handleDeleteSelected}
           title={userRole !== 'admin' ? 'You do not have permission to delete Template' : ''}
@@ -134,6 +148,21 @@ const closeViewer = () => setModalUrl(null);
           } transition`}>
           Delete 
         </button>
+        
+         <input
+          type="text"
+          placeholder="Search Template..."
+          className="border p-2 rounded text-xs ml-4"
+          style={{ width: '220px', height: '30px' }}
+          value={searchQuery}
+          onChange={handleSearchChange}/>
+
+         <button
+          onClick={() => fetchTemplates(searchQuery)}
+          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 rounded-lg">
+          Search
+        </button>
+
       </div>
 
       <table className="min-w-full border border-red-600 rounded text-sm">
@@ -155,7 +184,7 @@ const closeViewer = () => setModalUrl(null);
           </tr>
         </thead>
         <tbody>
-          {templates.length === 0 ? (
+          {noResults ? (
             <tr>
               <td colSpan="8" className="p-4 text-center font-bold text-red-700">
                 No Templates Found.
@@ -192,7 +221,9 @@ const closeViewer = () => setModalUrl(null);
             ))
           )}
         </tbody>
+
       </table>
+
       {modalUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
           <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] relative p-4">

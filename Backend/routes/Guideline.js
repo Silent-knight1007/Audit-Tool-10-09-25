@@ -196,7 +196,7 @@ router.get('/', async (req, res) => {
 // DELETE multiple guidelines
 router.delete('/', async (req, res) => {
   try {
-    const { ids } = req.body;
+    const { ids,role } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'No guideline IDs provided' });
     }
@@ -209,7 +209,8 @@ router.delete('/', async (req, res) => {
       deletedIds: ids
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete guidelines' });
+    console.error('Delete advisories error:', err);
+    res.status(500).json({ error: 'Failed to delete advisories', details: err.message });
   }
 });
 
