@@ -16,6 +16,7 @@ const nonConformitySchema = new mongoose.Schema({
   ncPreventiveAction: String,
   ncRootCause: String,
   ncstatus: String,
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Or appropriate user ID type
   attachments: [
     {
       filename: String, // The name stored on disk
