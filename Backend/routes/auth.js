@@ -6,19 +6,16 @@ const router = express.Router();
 const hashedSharedPassword = '$2b$10$hdmOGo5du0IJUxIo406MC.KJMX.2rvaoN72L8kz6pFkXDqu/CQwxa';
 
 const admin = [
-"admin1.onextel@onextel.com"
+"pooja.punyani@onextel.com"
 ];
 
 const allowedEmails = [
- "pooja.punyani@onextel.com",
- "ritika.sharma@onextel.com",
- "diya.ghakhar@onextel.com",
- "nistha.sandhu@onextel.com",
- "tina.punyani@onextel.com"
+"saurabh.gupta@onextel.com",
+"ritika.singh@onextel.com",
 ];
 
 const auditor = [
-"auditor1@onextel.com"
+"mohit.agarwal@onextel.com"
 ];
 
 function isOnextelEmail(email) {

@@ -174,16 +174,14 @@ const submitNCForm = async (ncData) => {
 };
     useEffect(() => {
       setResponsiblePeople([
-        { _id: 1, name: "Alice Johnson", email: "alice.johnson@example.com" },
-        { _id: 2, name: "Bob Smith", email: "bob.smith@example.com" },
-        { _id: 3, name: "Charlie Lee", email: "charlie.lee@example.com" }
+        { _id: 1, name: "saurabh.gupta", email: "saurabh.gupta@onextel.com" },
+        { _id: 2, name: "ritika.singh", email: "ritika@onextel.com" }
       ]);
     }, []);
 
     useEffect(() => {
     console.log('✅ actualdate received via navigate:', actualdate);
     }, [actualdate]);
-
 
     const ncLocationOptions = [
       { value: "Noida", label: "Noida" },

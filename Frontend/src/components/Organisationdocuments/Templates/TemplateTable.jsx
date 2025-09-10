@@ -13,26 +13,24 @@ const TemplateTable = () => {
   const userRole = user?.role || 'user';
   const [noResults, setNoResults] = useState(false);
 
+  const openViewer = (template) => {
+    if (template.attachments && template.attachments.length > 0) {
+      const file = template.attachments[0];
+      const ext = file.name.split('.').pop().toLowerCase();
 
+      const inlineViewable = ['pdf', 'png', 'jpg', 'jpeg'];
 
-const openViewer = (template) => {
-  if (template.attachments && template.attachments.length > 0) {
-    const file = template.attachments[0];
-    const ext = file.name.split('.').pop().toLowerCase();
+      const url = `http://localhost:5000/api/templates/${template._id}/attachments/${file._id}`;
 
-    // File types to preview inline in modal
-    const inlineViewable = ['pdf', 'png', 'jpg', 'jpeg'];
-
-    const url = `http://localhost:5000/api/templates/${template._id}/attachments/${file._id}`;
-
-    if (inlineViewable.includes(ext)) {
-      setModalUrl(url); // Open modal popup with iframe
-    } else {
-      window.location.href = url;  // Redirects in the same tab
+      if (inlineViewable.includes(ext)) {
+        setModalUrl(url); // Open modal popup with iframe
+      } else {
+        window.location.href = url;  // Redirects in the same tab
+      }
     }
-  }
-};
-const closeViewer = () => setModalUrl(null);
+  };
+
+  const closeViewer = () => setModalUrl(null);
 
   useEffect(() => {
     fetchTemplates(searchQuery);
@@ -40,33 +38,39 @@ const closeViewer = () => setModalUrl(null);
   }, []);
 
   const fetchTemplates = async (searchQuery = '') => {
-  console.log('Fetching templates for query:', searchQuery);
-  try {
-    const url = searchQuery 
-      ? `http://localhost:5000/api/templates?q=${encodeURIComponent(searchQuery)}`
-      : 'http://localhost:5000/api/templates';
+    console.log('Fetching templates for query:', searchQuery);
+    try {
+      const url = searchQuery 
+        ? `http://localhost:5000/api/templates?q=${encodeURIComponent(searchQuery)}`
+        : 'http://localhost:5000/api/templates';
 
-    const response = await axios.get(url);
-    console.log('Response data:', response.data);
-    setTemplates(response.data);
-    setNoResults(response.data.length === 0);
-  } catch(error) {
-    console.error('Error fetching templates:', error);
-  }
-};
-
-const handleSearchChange = (e) => {
-  const val = e.target.value;
-  console.log('Search input changed:', val);
-  setSearchQuery(e.target.value);
-};
-
-  const handleCreateNew = () => {
-    navigate('/organisationdocuments/templates/new');
+      const response = await axios.get(url);
+      console.log('Response data:', response.data);
+      setTemplates(response.data);
+      setNoResults(response.data.length === 0);
+    } catch(error) {
+      console.error('Error fetching templates:', error);
+    }
   };
 
-  const handleEditTemplate = (id) => {
-    navigate(`/organisationdocuments/templates/${id}`);
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    console.log('Search input changed:', val);
+    setSearchQuery(val);
+  };
+
+  const handleCreateNew = () => {
+    if (userRole === 'admin') {
+      navigate('/organisationdocuments/templates/new');
+    }
+  };
+
+  const handleEditSelected = () => {
+    if (selectedIds.length === 1 && userRole === 'admin') {
+      navigate(`/organisationdocuments/templates/${selectedIds[0]}`);
+    } else if (selectedIds.length !== 1) {
+      alert("Please select exactly one advisory to edit.");
+    }
   };
 
   const toggleSelect = (id) => {
@@ -86,7 +90,7 @@ const handleSearchChange = (e) => {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || userRole !== 'admin') return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected template(s)?`)) return;
     try {
       const response = await axios.delete('http://localhost:5000/api/templates', { 
@@ -94,7 +98,7 @@ const handleSearchChange = (e) => {
           ids: selectedIds,
           role: userRole,
          }
-         });
+       });
       const deletedIds = response.data.deletedIds || selectedIds;
       setTemplates(prev => prev.filter(t => !deletedIds.includes(t._id)));
       setSelectedIds([]);
@@ -102,14 +106,6 @@ const handleSearchChange = (e) => {
     } catch (error) {
       console.error('Error deleting templates:', error);
       alert('Failed to delete selected templates');
-    }
-  };
-
-  const handleEditSelected = () => {
-    if (selectedIds.length === 1) {
-       navigate(`/organisationdocuments/templates/${selectedIds[0]}`);
-    } else {
-    alert("Please select exactly one advisory to edit.");
     }
   };
 
@@ -121,60 +117,72 @@ const handleSearchChange = (e) => {
 
   return (
     <div className="p-2 max-w-full">
-        <h2 className="text-xl font-bold mr-10">Templates</h2>
+      <h2 className="text-xl font-bold mr-10 mt-5 mb-5">Templates</h2>
       <div className="flex gap-x-2 justify-left items-center mb-2">
 
-        <button
-          onClick={handleCreateNew}
-          className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300">
-          Add
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={handleCreateNew}
+            className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300"
+          >
+            Add
+          </button>
+        )}
 
-        <button
-          onClick={handleEditSelected}
-          disabled={selectedIds.length !== 1}
-          className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
-          selectedIds.length !== 1 ? 'bg-red-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500'
-          } transition`}>
+        {userRole === 'admin' && (
+          <button
+            onClick={handleEditSelected}
+            disabled={selectedIds.length !== 1}
+            className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
+              selectedIds.length !== 1 ? 'bg-red-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500'
+            } transition`}
+          >
             Edit 
-        </button>
+          </button>
+        )}
 
-        <button
-          onClick={handleDeleteSelected}
-          title={userRole !== 'admin' ? 'You do not have permission to delete Template' : ''}
-          disabled={selectedIds.length === 0 || userRole === 'user'}
-          className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
-          selectedIds.length === 0 || userRole === 'user' ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
-          } transition`}>
-          Delete 
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={handleDeleteSelected}
+            title={userRole !== 'admin' ? 'You do not have permission to delete Template' : ''}
+            disabled={selectedIds.length === 0}
+            className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
+              selectedIds.length === 0 ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
+            } transition`}
+          >
+            Delete 
+          </button>
+        )}
         
          <input
           type="text"
           placeholder="Search Template..."
-          className="border p-2 rounded text-xs ml-4"
+          className="border p-2 rounded text-xs mb-5"
           style={{ width: '220px', height: '30px' }}
           value={searchQuery}
-          onChange={handleSearchChange}/>
+          onChange={handleSearchChange}
+        />
 
          <button
           onClick={() => fetchTemplates(searchQuery)}
-          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 rounded-lg">
+          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 mb-5 rounded-lg"
+        >
           Search
         </button>
-
       </div>
 
       <table className="min-w-full border border-red-600 rounded text-sm">
         <thead className="bg-red-600">
           <tr>
-            <th className="border p-2">
-              <input
-                type="checkbox"
-                checked={templates.length > 0 && selectedIds.length === templates.length}
-                onChange={toggleSelectAll}
-              />
-            </th>
+            {userRole === 'admin' && (
+              <th className="border p-2">
+                <input
+                  type="checkbox"
+                  checked={templates.length > 0 && selectedIds.length === templates.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+            )}
             <th className="border p-2 text-xs text-white">Document ID</th>
             <th className="border p-2 text-xs text-white">Document Name</th>
             <th className="border p-2 text-xs text-white">Description</th>
@@ -193,23 +201,28 @@ const handleSearchChange = (e) => {
           ) : (
             templates.map(template => (
               <tr key={template._id} className="hover:bg-red-50">
-                <td className="border p-2 text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(template._id)}
-                    onChange={() => toggleSelect(template._id)}
-                  />
-                </td>
+                {userRole === 'admin' && (
+                  <td className="border p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(template._id)}
+                      onChange={() => toggleSelect(template._id)}
+                    />
+                  </td>
+                )}
                 <td className="border p-2">{template.documentId || '—'}</td>
                 <td className="border p-2">
                   {template.attachments && template.attachments.length > 0 ? (
                     <button
                       type="button"
                       onClick={() => openViewer(template)}
-                      className="text-blue-700 underline cursor-pointer bg-transparent border-0 p-0">
+                      className="text-blue-700 underline cursor-pointer bg-transparent border-0 p-0"
+                    >
                       {template.documentName}
                     </button>
-                  ) : (template.documentName || '—')}
+                  ) : (
+                    template.documentName || '—'
+                  )}
                 </td>
                 <td className="border p-2 max-w-xs truncate" title={template.description}>{template.description || '—'}</td>
                 <td className="border p-2">{template.versionNumber || '—'}</td>
@@ -221,7 +234,6 @@ const handleSearchChange = (e) => {
             ))
           )}
         </tbody>
-
       </table>
 
       {modalUrl && (
@@ -230,13 +242,15 @@ const handleSearchChange = (e) => {
             <button
               className="absolute top-2 right-3 text-2xl font-bold text-gray-700 hover:text-gray-900"
               onClick={closeViewer}
-              aria-label="Close modal">
+              aria-label="Close modal"
+            >
               &times;
             </button>
             <iframe
               src={modalUrl}
               title="Document Viewer"
-              className="w-full h-[80vh] border-none"/>
+              className="w-full h-[80vh] border-none"
+            />
           </div>
         </div>
       )}
@@ -245,3 +259,6 @@ const handleSearchChange = (e) => {
 };
 
 export default TemplateTable;
+
+
+

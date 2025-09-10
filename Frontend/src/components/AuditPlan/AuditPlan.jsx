@@ -147,21 +147,15 @@ export default function AuditPlan() {
   ];
 
   const auditTeamOptions = [
-    { value: "Alice", label: "Alice" },
-    { value: "Bob", label: "Bob" },
-    { value: "Charlie", label: "Charlie" },
-    { value: "David", label: "David" },
-    { value: "Eve", label: "Eve" },
+    { value: "pooja.punyani", label: "pooja.punyani" },
+    { value: "ritika.singh", label: "ritika.singh" },
+    { value: "anurag.bose", label: "anurag.bose" },
+   
   ];
 
   const handleAttachmentsChange = (e) => {
     setAttachments(Array.from(e.target.files));
   };
-
-  // const handleAuditTeamChange = (event) => {
-  //   const values = Array.from(event.target.selectedOptions, option => option.value);
-  //   setSelectedAuditTeam(values);
-  // };
 
   const submitAuditPlanForm = async (AuditPlanData) => {
   try {

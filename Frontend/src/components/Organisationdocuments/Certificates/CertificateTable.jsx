@@ -35,7 +35,7 @@ const CertificateTable = () => {
       if (query) params.q = query;
       const response = await axios.get('http://localhost:5000/api/certificates', { params });
       setCertificates(response.data);
-      setSelectedIds([]); // reset any selection after new fetch
+      setSelectedIds([]); // reset selection after fetch
     } catch (error) {
       console.error('Error fetching certificates:', error);
     }
@@ -52,13 +52,15 @@ const CertificateTable = () => {
   };
 
   const handleCreateNew = () => {
-    navigate('/organisationdocuments/certificates/new');
+    if (userRole === 'admin') {
+      navigate('/organisationdocuments/certificates/new');
+    }
   };
 
   const handleEditSelected = () => {
-    if (selectedIds.length === 1) {
+    if (selectedIds.length === 1 && userRole === 'admin') {
       navigate(`/organisationdocuments/certificates/${selectedIds[0]}`);
-    } else {
+    } else if (selectedIds.length !== 1) {
       alert('Please select exactly one certificate to edit.');
     }
   };
@@ -80,7 +82,7 @@ const CertificateTable = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || userRole !== 'admin') return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected certificate(s)?`)) return;
 
     try {
@@ -108,64 +110,72 @@ const CertificateTable = () => {
 
   return (
     <div className="p-2 max-w-full">
-      <h2 className="text-xl font-bold mr-10">Certificates</h2>
+      <h2 className="text-xl font-bold mr-10 mt-5 mb-5">Certificates</h2>
 
       <div className="flex gap-x-2 justify-left items-center mb-2">
+        {userRole === 'admin' && (
+          <button
+            onClick={handleCreateNew}
+            className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300"
+          >
+            Add
+          </button>
+        )}
 
-        <button
-          onClick={handleCreateNew}
-          className="bg-red-600 hover:bg-blue-dark text-white font-bold text-xs py-2 px-4 rounded-lg mt-5 mb-5 hover:bg-orange-600 transition ease-in-out duration-300"
-        >
-          Add
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={handleEditSelected}
+            disabled={selectedIds.length !== 1}
+            className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
+              selectedIds.length !== 1 ? 'bg-red-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500'
+            } transition`}
+          >
+            Edit
+          </button>
+        )}
 
-        <button
-          onClick={handleEditSelected}
-          disabled={selectedIds.length !== 1}
-          className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
-            selectedIds.length !== 1 ? 'bg-red-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500'
-          } transition`}
-        >
-          Edit
-        </button>
-
-        <button
-          onClick={handleDeleteSelected}
-          title={userRole !== 'admin' ? 'You do not have permission to delete Certificate' : ''}
-          disabled={selectedIds.length === 0 || userRole === 'user'}
-          className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
-          selectedIds.length === 0 || userRole !== 'admin' ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
-          } transition`}>
-          Delete
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={handleDeleteSelected}
+            title={userRole !== 'admin' ? 'You do not have permission to delete Certificate' : ''}
+            disabled={selectedIds.length === 0}
+            className={`px-4 py-2 rounded-lg font-bold text-white text-xs ${
+              selectedIds.length === 0 ? 'bg-red-600 cursor-not-allowed' : 'hover:bg-orange-600'
+            } transition`}
+          >
+            Delete
+          </button>
+        )}
 
         <input
           type="text"
           placeholder="Search certificates..."
-          className="border p-2 rounded text-xs ml-4"
+          className="border p-2 rounded text-xs mb-5"
           style={{ width: '220px', height: '30px' }}
           value={searchQuery}
           onChange={handleSearchChange}
         />
 
-         <button
+        <button
           onClick={() => fetchCertificates(searchQuery)}
-          className="bg-red-600 hover:bg-orange-600 text-white font-bold text-xs py-2 px-3 rounded-lg">
+          className="bg-red-600 hover:bg-orange-600 text-white mb-5 font-bold text-xs py-2 px-3 rounded-lg"
+        >
           Search
         </button>
-
       </div>
 
       <table className="min-w-full border border-red-600 rounded text-sm">
         <thead className="bg-red-600">
           <tr>
-            <th className="border p-2">
-              <input
-                type="checkbox"
-                checked={certificates.length > 0 && selectedIds.length === certificates.length}
-                onChange={toggleSelectAll}
-              />
-            </th>
+            {userRole === 'admin' && (
+              <th className="border p-2">
+                <input
+                  type="checkbox"
+                  checked={certificates.length > 0 && selectedIds.length === certificates.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+            )}
             <th className="border p-2 text-xs text-white">Document ID</th>
             <th className="border p-2 text-xs text-white">Document Name</th>
             <th className="border p-2 text-xs text-white">Description</th>
@@ -177,20 +187,22 @@ const CertificateTable = () => {
         <tbody>
           {certificates.length === 0 ? (
             <tr>
-              <td colSpan="8" className="p-4 text-center font-bold text-red-700">
+              <td colSpan={userRole === 'admin' ? 8 : 7} className="p-4 text-center font-bold text-red-700">
                 No Certificates Found.
               </td>
             </tr>
           ) : (
             certificates.map((certificate) => (
               <tr key={certificate._id} className="hover:bg-red-50">
-                <td className="border p-2 text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(certificate._id)}
-                    onChange={() => toggleSelect(certificate._id)}
-                  />
-                </td>
+                {userRole === 'admin' && (
+                  <td className="border p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(certificate._id)}
+                      onChange={() => toggleSelect(certificate._id)}
+                    />
+                  </td>
+                )}
                 <td className="border p-2">{certificate.documentId || '—'}</td>
                 <td className="border p-2">
                   {certificate.attachments && certificate.attachments.length > 0 ? (
@@ -236,5 +248,11 @@ const CertificateTable = () => {
 };
 
 export default CertificateTable;
+
+
+
+
+
+
 
 
